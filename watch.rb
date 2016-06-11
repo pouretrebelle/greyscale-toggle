@@ -28,7 +28,7 @@ def process_colour(filename)
   copy_file filename, 'colour'
 end
 def process_greyscale(filename)
-  system('convert ' + filename + ' -colorspace Gray ' + 'greyscale/' + get_filename(filename))
+  system('convert ' + filename + ' -colorspace Gray -contrast-stretch 3%x4% ' + 'greyscale/' + get_filename(filename))
 end
 
 
