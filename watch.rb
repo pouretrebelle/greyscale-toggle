@@ -24,11 +24,25 @@ def copy_to_current
     FileUtils.cp_r 'greyscale/.', 'current'
   end
 end
-def process_image(filename)
-    # copy to colour
-    copy_file filename, 'colour'
-    # convert and copy to greyscale
-    system('convert ' + filename + ' -colorspace Gray ' + 'greyscale/' + get_filename(filename))
+def process_colour(filename)
+  copy_file filename, 'colour'
+end
+def process_greyscale(filename)
+  system('convert ' + filename + ' -colorspace Gray ' + 'greyscale/' + get_filename(filename))
+end
+
+
+# check that all original filenames exist in colour and greyscale
+# copy and process them if not
+Dir.foreach('original') do |filename|
+  if !File.exist?('colour/' + filename)
+    process_colour 'original/' + filename
+    puts 'File processed: ' + filename + ' (colour)'
+  end
+  if !File.exist?('greyscale/' + filename)
+    process_greyscale 'original/' + filename
+    puts 'File processed: ' + filename + ' (greyscale)'
+  end
 end
 
 
@@ -61,7 +75,8 @@ FileWatcher.new('**/*.*', spinner: true).watch() do |filename, event|
   when 'original'
     # if changed or new
     if (event == :changed || event == :new)
-      process_image filename
+      process_colour filename
+      process_greyscale filename
     end
     # if removed
     if (event == :delete)
