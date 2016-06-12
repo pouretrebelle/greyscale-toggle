@@ -1,1 +1,3 @@
-colour: false
+colour:            false
+convert_colour:    
+convert_greyscale: -colorspace Gray -contrast-stretch 3%x4%

@@ -13,9 +13,8 @@ end
 def remove_file(src, dest)
   FileUtils.rm dest + '/' + get_filename(src), :force => true
 end
-def get_colour
-  config = YAML.load_file('config.yml')
-  $colour = config['colour']
+def get_config
+  $config = YAML.load_file('config.yml')
 end
 def copy_to_current
   if $colour
@@ -25,11 +24,18 @@ def copy_to_current
   end
 end
 def process_colour(filename)
-  copy_file filename, 'colour'
+  system('convert ' + filename + ' ' + ($convert_colour || '') + ' colour/' + get_filename(filename))
 end
 def process_greyscale(filename)
-  system('convert ' + filename + ' -colorspace Gray -contrast-stretch 3%x4% ' + 'greyscale/' + get_filename(filename))
+  system('convert ' + filename + ' ' + ($convert_greyscale || '') + ' greyscale/' + get_filename(filename))
 end
+
+
+# set variables
+get_config
+$colour = $config['colour']
+$convert_colour = $config['convert_colour']
+$convert_greyscale = $config['convert_greyscale']
 
 
 # check that all original filenames exist in colour and greyscale
@@ -47,7 +53,6 @@ end
 
 
 # overwrite all current with correct copy
-get_colour
 copy_to_current
 
 
@@ -63,8 +68,36 @@ FileWatcher.new('**/*.*', spinner: true).watch() do |filename, event|
   end
 
   if filename == 'config.yml'
-    # update colour boolean
-    get_colour
+    get_config
+    # toggle toggled
+    if ($colour != $config['colour'])
+      $colour = $config['colour']
+      if $colour
+        puts 'Toggled to colour'
+      else
+        puts 'Toggled to greyscale'
+      end
+    end
+    # colour config changed
+    if ($convert_colour != $config['convert_colour'])
+      puts 'Colour config changed'
+      $convert_colour = $config['convert_colour']
+      Dir.foreach('original') do |image_filename|
+        next if image_filename == '.' or image_filename == '..'
+        process_colour 'original/' + image_filename
+        puts 'File processed: ' + image_filename + ' (colour)'
+      end
+    end
+    # greyscale config changed
+    if ($convert_greyscale != $config['convert_greyscale'])
+      puts 'Greyscale config changed'
+      $convert_greyscale = $config['convert_greyscale']
+      Dir.foreach('original') do |image_filename|
+        next if image_filename == '.' or image_filename == '..'
+        process_greyscale 'original/' + image_filename
+        puts 'File processed: ' + image_filename + ' (greyscale)'
+      end
+    end
     # copy from the correct folder
     copy_to_current
   end
