@@ -12,6 +12,7 @@ def copy_file(src, dest)
 end
 def remove_file(src, dest)
   FileUtils.rm dest + '/' + get_filename(src), :force => true
+  puts 'File removed: ' + src + ' (' + dest + ')'
 end
 def get_config
   $config = YAML.load_file('config.yml')
@@ -41,6 +42,7 @@ $convert_greyscale = $config['convert_greyscale']
 # check that all original filenames exist in colour and greyscale
 # copy and process them if not
 Dir.foreach('original') do |filename|
+  next if filename == '.' or filename == '..'
   if !File.exist?('colour/' + filename)
     process_colour 'original/' + filename
     puts 'File processed: ' + filename + ' (colour)'
@@ -48,6 +50,21 @@ Dir.foreach('original') do |filename|
   if !File.exist?('greyscale/' + filename)
     process_greyscale 'original/' + filename
     puts 'File processed: ' + filename + ' (greyscale)'
+  end
+end
+
+
+# delete processed files if they're not in original
+Dir.foreach('colour') do |filename|
+  next if filename == '.' or filename == '..'
+  if !File.exist?('original/' + filename)
+    remove_file filename, 'colour'
+  end
+end
+Dir.foreach('greyscale') do |filename|
+  next if filename == '.' or filename == '..'
+  if !File.exist?('original/' + filename)
+    remove_file filename, 'greyscale'
   end
 end
 
