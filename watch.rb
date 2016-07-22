@@ -31,6 +31,13 @@ def process_greyscale(filename)
   system('convert ' + filename + ' ' + ($convert_greyscale || '') + ' greyscale/' + get_filename(filename))
 end
 
+def check_filename(filename)
+  ext = filename.split('.')[-1]
+  if ext.nil? or ext.downcase != 'jpg'
+    return true
+  end
+  return false
+end
 
 # set variables
 get_config
@@ -42,7 +49,7 @@ $convert_greyscale = $config['convert_greyscale']
 # check that all original filenames exist in colour and greyscale
 # copy and process them if not
 Dir.foreach('original') do |filename|
-  next if filename == '.' or filename == '..'
+  next if check_filename(filename)
   if !File.exist?('colour/' + filename)
     process_colour 'original/' + filename
     puts 'File processed: ' + filename + ' (colour)'
@@ -56,13 +63,13 @@ end
 
 # delete processed files if they're not in original
 Dir.foreach('colour') do |filename|
-  next if filename == '.' or filename == '..'
+  next if check_filename(filename)
   if !File.exist?('original/' + filename)
     remove_file filename, 'colour'
   end
 end
 Dir.foreach('greyscale') do |filename|
-  next if filename == '.' or filename == '..'
+  next if check_filename(filename)
   if !File.exist?('original/' + filename)
     remove_file filename, 'greyscale'
   end
@@ -75,14 +82,6 @@ copy_to_current
 
 # watch files
 FileWatcher.new('**/*.*', spinner: true).watch() do |filename, event|
-
-  if (event == :new)
-    puts 'File added: ' + filename
-  elsif (event == :changed)
-    puts 'File updated: ' + filename
-  elsif (event == :delete)
-    puts 'File deleted: ' + filename
-  end
 
   if filename == 'config.yml'
     get_config
@@ -100,7 +99,7 @@ FileWatcher.new('**/*.*', spinner: true).watch() do |filename, event|
       puts 'Colour config changed'
       $convert_colour = $config['convert_colour']
       Dir.foreach('original') do |image_filename|
-        next if image_filename == '.' or image_filename == '..'
+        next if check_filename(image_filename)
         process_colour 'original/' + image_filename
         puts 'File processed: ' + image_filename + ' (colour)'
       end
@@ -110,13 +109,23 @@ FileWatcher.new('**/*.*', spinner: true).watch() do |filename, event|
       puts 'Greyscale config changed'
       $convert_greyscale = $config['convert_greyscale']
       Dir.foreach('original') do |image_filename|
-        next if image_filename == '.' or image_filename == '..'
+        next if check_filename(image_filename)
         process_greyscale 'original/' + image_filename
         puts 'File processed: ' + image_filename + ' (greyscale)'
       end
     end
     # copy from the correct folder
     copy_to_current
+  end
+
+  next if check_filename(filename)
+
+  if (event == :new)
+    puts 'File added: ' + filename
+  elsif (event == :changed)
+    puts 'File updated: ' + filename
+  elsif (event == :delete)
+    puts 'File deleted: ' + filename
   end
 
   folder = filename.split('/')[0]
