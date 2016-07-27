@@ -11,6 +11,13 @@ Uses ruby and imagemagick to automate production of greyscale images and toggle 
 └── config.yml
 ```
 
-When images are added to or updated in `original` they are copied into `colour`, processed and copied into `greyscale`, and the relevant varient copied into `current`.
+When images are added to or updated in `original` they are copied into `colour`, processed and copied into `greyscale`, and the relevant variant copied into `current`.
 
 If you change the `current` mode in `config.yml`, the contents of either the `colour` or `greyscale` folder will be copied into `current`.
+
+## Usage
+
+```bash
+mkdir original current greyscale colour
+ruby watch.rb
+```
